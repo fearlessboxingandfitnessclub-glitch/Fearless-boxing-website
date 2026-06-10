@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cook Magic</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;}
+body{background:#f4f7fb;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;}
+.container{width:100%;max-width:700px;background:white;padding:30px;border-radius:15px;box-shadow:0 4px 12px rgba(0,0,0,0.1);}
+h1{text-align:center;margin-bottom:20px;color:#333;}
+input{width:100%;padding:12px;margin:10px 0;border:1px solid #ccc;border-radius:8px;font-size:16px;}
+button{width:100%;padding:14px;background:#4CAF50;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer;transition:0.3s;margin-top:10px;}
+button:hover{background:#43a047;}
+button:disabled{opacity:0.7;cursor:not-allowed;}
+#result{margin-top:20px;background:#fafafa;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);min-height:120px;white-space:pre-wrap;line-height:1.6;display:none;}
+#result.show{display:block;}
+.error{color:#d32f2f;}
+.loading{color:#666;}
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Cook Magic 🍳</h1>
+    <input type="text" id="ingredient1" placeholder="Ingredient 1">
+    <input type="text" id="ingredient2" placeholder="Ingredient 2">
+    <input type="text" id="ingredient3" placeholder="Ingredient 3">
+    <button id="cookBtn">Cook Magic</button>
+    <div id="result"></div>
+</div>
+<script>
+async function cookMagic(){
+    const btn = document.getElementById("cookBtn");
+    const result = document.getElementById("result");
+    const ing1 = document.getElementById("ingredient1").value.trim();
+    const ing2 = document.getElementById("ingredient2").value.trim();
+    const ing3 = document.getElementById("ingredient3").value.trim();
+
+    if (!ing1 || !ing2 || !ing3) {
+        result.innerText = "Error: Please fill in all three ingredients";
+        result.classList.add("show", "error");
+        return;
+    }
+
+    btn.innerText = "Loading...";
+    btn.disabled = true;
+    result.innerText = "Generating recipe...";
+    result.classList.add("show", "loading");
+    result.classList.remove("error");
+
+    try{
+        const response = await fetch("/api/generate-recipe", {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({ingredient1: ing1, ingredient2: ing2, ingredient3: ing3})
+        });
+
+        if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+
+        result.innerText = data.recipe;
+        result.classList.remove("loading", "error");
+    }
+    catch(error){
+        result.innerText = "Error: " + error.message;
+        result.classList.add("error");
+        result.classList.remove("loading");
+    }
+    finally{
+        btn.innerText = "Cook Magic";
+        btn.disabled = false;
+    }
+}
+
+document.getElementById("cookBtn").addEventListener("click", cookMagic);
+</script>
+</body>
+</html>
